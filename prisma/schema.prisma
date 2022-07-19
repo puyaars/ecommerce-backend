@@ -16,16 +16,13 @@ enum Role {
 }
 
 model User {
-  id             String           @id @default(cuid())
-  name           String
-  email          String
-  salt           String
-  hash           String
-  role           Role
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @default(now())
-  BillingAddress BillingAddress[]
-  Order          Order[]
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  hash      String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }
 
 model Tag {
@@ -56,17 +53,19 @@ model Product {
   description String?
   longDesc    String?
   onSale      Boolean
-  ProductTag  ProductTag[]
-  Category    Category?         @relation(fields: [categoryId], references: [id])
-  Brand       Brand?            @relation(fields: [brandId], references: [id])
+  price       Float?
+  tags        ProductTag[]
+  category    Category?         @relation(fields: [categoryId], references: [id])
+  brand       Brand?            @relation(fields: [brandId], references: [id])
   categoryId  String?
   brandId     String?
-  Promotion   Promotion?        @relation(fields: [promotionId], references: [id])
+  promotion   Promotion?        @relation(fields: [promotionId], references: [id])
   promotionId String?
-  OrderItem   OrderItem[]
+  orderItem   OrderItem[]
   variants    ProductVariant[]
   properties  ProductProperty[]
   reviews     ProductReview[]
+  images      ProductImage[]
 }
 
 model ProductProperty {
@@ -91,21 +90,32 @@ model ProductReview {
   email     String
   rating    Float
   comment   String
-  Product   Product  @relation(fields: [productId], references: [id])
+  confirmed Boolean  @default(false)
+  product   Product  @relation(fields: [productId], references: [id])
   productId String
   createdAt DateTime @default(now())
 }
 
 model ProductVariant {
-  id              String            @id @default(cuid())
-  name            String
-  price           Float
-  quantity        Int
-  isDefault       Boolean           @default(false)
-  Product         Product           @relation(fields: [productId], references: [id])
-  productId       String
-  images          String[]
-  VariantProperty VariantProperty[]
+  id         String            @id @default(cuid())
+  name       String
+  price      Float
+  quantity   Int
+  isDefault  Boolean           @default(false)
+  product    Product           @relation(fields: [productId], references: [id])
+  productId  String
+  properties VariantProperty[]
+  images     ProductImage[]
+  OrderItem  OrderItem[]
+}
+
+model ProductImage {
+  id        String         @id @default(cuid())
+  url       String
+  product   Product        @relation(fields: [productId], references: [id])
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  variantId String
+  productId String
 }
 
 model ProductTag {
@@ -130,8 +140,7 @@ model BillingAddress {
   phone     String
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
-  User      User?    @relation(fields: [userId], references: [id])
-  userId    String?
+  Order     Order[]
 }
 
 model Promotion {
@@ -145,13 +154,15 @@ model Promotion {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  product   Product @relation(fields: [productId], references: [id])
-  productId String
-  quantity  Int
-  price     Float
-  Order     Order?  @relation(fields: [orderId], references: [id])
-  orderId   String?
+  id               String         @id @default(cuid())
+  product          Product        @relation(fields: [productId], references: [id])
+  productId        String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  quantity         Int
+  price            Float
+  Order            Order?         @relation(fields: [orderId], references: [id])
+  orderId          String?
 }
 
 enum OrderStatus {
@@ -162,12 +173,11 @@ enum OrderStatus {
 }
 
 model Order {
-  id        String      @id @default(cuid())
-  user      User        @relation(fields: [userId], references: [id])
-  userId    String
-  items     OrderItem[]
-  status    OrderStatus
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @default(now())
-
+  id               String         @id @default(cuid())
+  billing          BillingAddress @relation(fields: [billingAddressId], references: [id])
+  items            OrderItem[]
+  status           OrderStatus    @default(PENDING)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now())
+  billingAddressId String
 }
