@@ -49,6 +49,8 @@
     "koa-router": "^11.0.1",
     "koa-static": "^5.0.0",
     "minio": "^7.0.29",
-    "nodemailer": "^6.7.7"
+    "nodemailer": "^6.7.7",
+    "swagger2": "^3.0.1",
+    "swagger2-koa": "^3.0.1"
   }
 }

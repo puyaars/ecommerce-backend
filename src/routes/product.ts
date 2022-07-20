@@ -9,17 +9,31 @@ const router = new Router({
 interface ProductFilterArgs {
   page: string;
   perPage: string;
-  onSale?: boolean;
+  onSale?: string;
   categoryId?: string;
   brandId?: string;
+  priceRange?: string;
   SortBy?: "name" | "price" | "createdAt";
   order?: "asc" | "desc";
 }
 
 router.get("/", async (ctx) => {
-  let { page, perPage, onSale, categoryId, brandId, SortBy, order } = <
-    ProductFilterArgs
-  >(<unknown>ctx.query);
+  let {
+    page,
+    perPage,
+    onSale,
+    categoryId,
+    brandId,
+    SortBy,
+    order,
+    priceRange,
+  } = <ProductFilterArgs>(<unknown>ctx.query);
+
+  let _priceRange = priceRange || "0-0";
+  const [min, max] = _priceRange.split("-");
+  const minPrice = parseInt(min, 10);
+  const maxPrice = parseInt(max, 10);
+
   let _page = parseInt(page) || 1;
   let _perPage = parseInt(perPage) || 10;
 
@@ -42,25 +56,39 @@ router.get("/", async (ctx) => {
 
   let total = await prisma.product.count({
     where: {
-      onSale: onSale,
+      onSale:
+        onSale !== undefined ? (onSale === "true" ? true : false) : undefined,
       categoryId: categoryId
         ? {
             in: categoryIds,
           }
         : undefined,
       brandId,
+      price: priceRange
+        ? {
+            gte: minPrice,
+            lte: maxPrice,
+          }
+        : undefined,
     },
   });
 
   const products = await prisma.product.findMany({
     where: {
-      onSale: onSale,
+      onSale:
+        onSale !== undefined ? (onSale === "true" ? true : false) : undefined,
       categoryId: categoryId
         ? {
             in: categoryIds,
           }
         : undefined,
       brandId,
+      price: priceRange
+        ? {
+            gte: minPrice,
+            lte: maxPrice,
+          }
+        : undefined,
     },
     include: {
       category: true,
